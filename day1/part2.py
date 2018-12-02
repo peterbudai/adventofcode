@@ -9,5 +9,5 @@ def find_repeat(input):
             else:
                 previous.add(current)
 
-with open('day1/input.txt') as f:
+with open('input.txt') as f:
     print(find_repeat([int(line) for line in f]))
