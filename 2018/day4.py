@@ -37,7 +37,7 @@ def sleep_calendar(input):
         yield current
 
 guards = {}
-for c in sleep_calendar(read_input('input.txt')):
+for c in sleep_calendar(read_input('day4.txt')):
     guards.setdefault(c[1], [0 for _ in range(60)])
     for i in range(60):
         guards[c[1]][i] += c[2][i]

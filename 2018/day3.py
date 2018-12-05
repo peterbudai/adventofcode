@@ -3,7 +3,7 @@ import re
 regex = re.compile(r'^#(\d+)\s+@\s+(\d+),(\d+):\s+(\d+)x(\d+)$')
 area = [set() for i in range(1000*1000)]
 claims = {}
-with open('input.txt') as f:
+with open('day3.txt') as f:
     for id, left,top,width,height in (regex.match(line).groups() for line in f):
         for h in range(int(height)):
             for w in range(int(width)):

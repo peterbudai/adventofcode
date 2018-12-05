@@ -9,7 +9,7 @@ def find_repeat(input):
             else:
                 previous.add(current)
                 
-with open('input.txt') as f:
+with open('day1.txt') as f:
     input = [int(line) for line in f]
 
 print(sum(input))

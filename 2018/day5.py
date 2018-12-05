@@ -1,4 +1,4 @@
-with open('input.txt') as f:
+with open('day5.txt') as f:
     input = f.read().strip()
 
 def react(input):

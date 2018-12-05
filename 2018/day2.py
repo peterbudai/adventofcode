@@ -12,7 +12,7 @@ def find_pair(lines):
                     return (lines[i], lines[j])
 
 
-with open('input.txt') as f:
+with open('day2.txt') as f:
     lines = [l.strip() for l in f]
 
 stats = [{line.count(char) for char in set(line)} for line in lines]
