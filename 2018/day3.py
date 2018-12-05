@@ -1,3 +1,5 @@
+# https://adventofcode.com/2018/day/3
+
 import re
 
 regex = re.compile(r'^#(\d+)\s+@\s+(\d+),(\d+):\s+(\d+)x(\d+)$')

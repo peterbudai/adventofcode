@@ -1,3 +1,5 @@
+# https://adventofcode.com/2018/day/5
+
 with open('day5.txt') as f:
     input = f.read().strip()
 

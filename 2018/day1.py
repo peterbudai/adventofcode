@@ -1,3 +1,5 @@
+# https://adventofcode.com/2018/day/1
+
 def find_repeat(input):
     previous = {0}
     current = 0
