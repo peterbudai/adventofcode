@@ -13,7 +13,11 @@ def find_pair(lines):
 
 
 with open('input.txt') as f:
-    a, b = find_pair([l.strip() for l in f])
+    lines = [l.strip() for l in f]
 
+stats = [{line.count(char) for char in set(line)} for line in lines]
+print(len(list(filter(lambda s: 2 in s, stats))) * len(list(filter(lambda s: 3 in s, stats))))
+
+a, b = find_pair(lines)
 i = next(n for n, c in enumerate(a) if a[n] != b[n])
 print(a[:i]+b[i+1:])

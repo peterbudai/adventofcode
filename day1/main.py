@@ -8,6 +8,9 @@ def find_repeat(input):
                 return current
             else:
                 previous.add(current)
-
+                
 with open('input.txt') as f:
-    print(find_repeat([int(line) for line in f]))
+    input = [int(line) for line in f]
+
+print(sum(input))
+print(find_repeat(input))

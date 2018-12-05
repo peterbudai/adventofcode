@@ -1,5 +1,4 @@
 import re
-import operator
 from datetime import date, time, timedelta
 
 SLEEP = -1
@@ -23,13 +22,6 @@ def read_input(fn):
                     t = time(0)
             yield (d, t, action)
 
-# determine boundary values
-# print(min(read_input(), key=lambda i: i[0]))
-# print(max(read_input(), key=lambda i: i[0]))
-# print(len(set(map(lambda i: i[1], read_input()))))
-# print(min(filter(lambda i: i[1] > time(12,0), read_input()), key=lambda i: i[1]))
-# print(max(filter(lambda i: i[1] < time(12,0), read_input()), key=lambda i: i[1]))
-
 def sleep_calendar(input):
     current = None
     for date, time, action in sorted(input):
@@ -44,11 +36,15 @@ def sleep_calendar(input):
     if current is not None:
         yield current
 
-cal = list(sleep_calendar(read_input('input.txt')))
-guards = {c[1]: [0 for _ in range(60)] for c in cal}
-for c in cal:
+guards = {}
+for c in sleep_calendar(read_input('input.txt')):
+    guards.setdefault(c[1], [0 for _ in range(60)])
     for i in range(60):
         guards[c[1]][i] += c[2][i]
+
+winner_guard = max(guards, key=lambda g: sum(guards[g]))
+winner_minute = max(enumerate(guards[winner_guard]), key=lambda m: m[1])[0]
+print(winner_guard * winner_minute)
 
 winner_minute = max(range(60), key=lambda i: max(guards[g][i] for g in guards))
 winner_guard = max(guards, key=lambda g: guards[g][winner_minute])
