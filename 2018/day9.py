@@ -1,7 +1,6 @@
 # https://adventofcode.com/2018/day/9
 
 import re
-import sys
 from collections import deque
 
 with open('day9.txt') as file:
