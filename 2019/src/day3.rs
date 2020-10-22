@@ -1,51 +1,55 @@
 use anyhow::Result;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-struct Location {
+struct Pos {
     pub x: isize,
     pub y: isize,
 }
 
-impl Location {
-    fn central() -> Location {
-        Location { x: 0, y: 0 }
+impl Pos {
+    pub fn new(x: isize, y: isize) -> Self {
+        Pos { x, y }
     }
 
-    fn distance(&self) -> isize {
-        self.x.abs() + self.y.abs()
+    pub fn central() -> Self {
+        Pos { x: 0, y: 0 }
+    }
+
+    pub fn dist(&self) -> usize {
+        self.x.abs() as usize + self.y.abs() as usize
     }
 }
 
 #[cfg(test)]
 #[test]
-fn test_location_distance() {
-    assert_eq!(Location::central().distance(), 0);
-    assert_eq!(Location { x: 1, y: 0 }.distance(), 1);
-    assert_eq!(Location { x: 0, y: -1 }.distance(), 1);
-    assert_eq!(Location { x: 1, y: 1 }.distance(), 2);
-    assert_eq!(Location { x: -2, y: 1 }.distance(), 3);
+fn test_distance() {
+    assert_eq!(Pos::central().dist(), 0);
+    assert_eq!(Pos::new(1, 0).dist(), 1);
+    assert_eq!(Pos::new(0, -1).dist(), 1);
+    assert_eq!(Pos::new(1, 1).dist(), 2);
+    assert_eq!(Pos::new(-2, 1).dist(), 3);
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-enum Trace {
-    Up(isize),
-    Down(isize),
-    Left(isize),
-    Right(isize),
+enum Dir {
+    Up(usize),
+    Down(usize),
+    Left(usize),
+    Right(usize),
 }
 
-impl Trace {
+impl Dir {
     fn parse(s: &str) -> Result<Self> {
         anyhow::ensure!(s.len() > 0, "Empty trace");
 
-        let distance = s[1..].parse::<isize>()?;
-        anyhow::ensure!(distance > 0, "Invalid distance");
+        let dist = s[1..].parse::<usize>()?;
+        anyhow::ensure!(dist > 0, "Invalid distance");
 
         match s.chars().nth(0) {
-            Some('U') => Ok(Trace::Up(distance)),
-            Some('D') => Ok(Trace::Down(distance)),
-            Some('L') => Ok(Trace::Left(distance)),
-            Some('R') => Ok(Trace::Right(distance)),
+            Some('U') => Ok(Dir::Up(dist)),
+            Some('D') => Ok(Dir::Down(dist)),
+            Some('L') => Ok(Dir::Left(dist)),
+            Some('R') => Ok(Dir::Right(dist)),
             _ => anyhow::bail!("Invalid direction")
         }
     }
@@ -53,35 +57,42 @@ impl Trace {
 
 #[cfg(test)]
 #[test]
-fn test_trace_parse() {
-    assert_eq!(Trace::parse("U20").unwrap(), Trace::Up(20));
-    assert_eq!(Trace::parse("D2").unwrap(), Trace::Down(2));
-    assert_eq!(Trace::parse("L1").unwrap(), Trace::Left(1));
-    assert_eq!(Trace::parse("R3333").unwrap(), Trace::Right(3333));
+fn test_parse_dir() {
+    assert_eq!(Dir::parse("U20").unwrap(), Dir::Up(20));
+    assert_eq!(Dir::parse("D2").unwrap(), Dir::Down(2));
+    assert_eq!(Dir::parse("L1").unwrap(), Dir::Left(1));
+    assert_eq!(Dir::parse("R3333").unwrap(), Dir::Right(3333));
 
-    assert!(Trace::parse("X3").is_err());
-    assert!(Trace::parse("U0").is_err());
-    assert!(Trace::parse("R-3").is_err());
+    assert!(Dir::parse("X3").is_err());
+    assert!(Dir::parse("U0").is_err());
+    assert!(Dir::parse("R-3").is_err());
 }
 
 #[derive(Debug, Clone, PartialEq)]
-struct Path(Vec<Trace>);
+struct Path(Vec<Dir>);
 
 impl Path {
-    fn parse(s: &str) -> Result<Self> {
-        s.split(',').filter_map(|s| if s.is_empty() { None } else { Some(Trace::parse(s))}).collect::<Result<Vec<_>, _>>().map(|v| Path(v))
+    pub fn parse(s: &str) -> Result<Self> {
+        s.split(',').filter_map(|s| if s.is_empty() { None } else { Some(Dir::parse(s))}).collect::<Result<Vec<_>, _>>().map(|v| Path(v))
     }
-}
 
-impl IntoIterator for Path {
-    type Item = Location;
-    type IntoIter = PathIterator;
+    pub fn trace(&self) -> Vec<Pos> {
+        let mut trace = Vec::<Pos>::new();
+        trace.push(Pos::central());
 
-    fn into_iter(self) -> Self::IntoIter {
-        PathIterator {
-            location: None,
-            path: self.0,
+        for dir in &self.0 {
+            let (d, dx, dy) = match dir {
+                Dir::Up(d) => (d, 0isize, 1isize),
+                Dir::Down(d) => (d, 0isize, -1isize),
+                Dir::Left(d) => (d, -1isize, 0isize),
+                Dir::Right(d) => (d, 1isize, 0isize),
+            };
+            let last = *trace.last().unwrap();
+            for i in 1..(*d as isize)+1 {
+                trace.push(Pos::new(last.x + dx * i, last.y + dy * i))
+            }
         }
+        trace
     }
 }
 
@@ -89,78 +100,63 @@ impl IntoIterator for Path {
 #[test]
 fn test_path_parse() {
     assert_eq!(Path::parse("").unwrap(), Path(vec![]));
-    assert_eq!(Path::parse("L2").unwrap(), Path(vec![Trace::Left(2)]));
-    assert_eq!(Path::parse("L2,U4").unwrap(), Path(vec![Trace::Left(2),Trace::Up(4)]));
-    assert_eq!(Path::parse("L2,U4,").unwrap(), Path(vec![Trace::Left(2),Trace::Up(4)]));
+    assert_eq!(Path::parse("L2").unwrap(), Path(vec![Dir::Left(2)]));
+    assert_eq!(Path::parse("L2,U4").unwrap(), Path(vec![Dir::Left(2), Dir::Up(4)]));
+    assert_eq!(Path::parse("L2,U4,").unwrap(), Path(vec![Dir::Left(2), Dir::Up(4)]));
 
     assert!(Path::parse("X2").is_err());
     assert!(Path::parse("L2;U4").is_err());
 }
 
-struct PathIterator {
-    location: Option<Location>,
-    path: Vec<Trace>,
+#[cfg(test)]
+#[test]
+fn test_path_trace() {
+    let mut path = Path(vec![Dir::Right(2000)]);
+    assert!(path.trace().iter().enumerate().all(|(i, l)| l.x == i as isize && l.y == 0));
+    path = Path(vec![Dir::Up(1), Dir::Right(2), Dir::Down(3), Dir::Left(4)]);
+    assert_eq!(path.trace(), vec![Pos::central(), Pos::new(0,1), Pos::new(1,1),Pos::new(2,1),Pos::new(2,0),Pos::new(2,-1),Pos::new(2,-2),Pos::new(1,-2),Pos::new(0,-2),Pos::new(-1,-2),Pos::new(-2,-2)]);
 }
 
-impl Iterator for PathIterator {
-    type Item = Location;
+fn nearest_crossing(path1: &Path, path2: &Path) -> (usize, usize) {
+    let trace1 = path1.trace();
+    let trace2 = path2.trace();
 
-    fn next(&mut self) -> Option<Self::Item> {
-        if let Some(loc) = self.location {
-            if let Some(trace) = self.path.first_mut() {
-                let (nloc, ntrace) = match trace {
-                    Trace::Up(1) => (Location {x: loc.x, y: loc.y + 1}, None),
-                    Trace::Up(d) => (Location {x: loc.x, y: loc.y + 1}, Some(Trace::Up(*d - 1))),
-                    Trace::Down(1) => (Location {x: loc.x, y: loc.y - 1}, None),
-                    Trace::Down(d) => (Location {x: loc.x, y: loc.y - 1}, Some(Trace::Down(*d - 1))),
-                    Trace::Left(1) => (Location {x: loc.x - 1, y: loc.y}, None),
-                    Trace::Left(d) => (Location {x: loc.x - 1, y: loc.y}, Some(Trace::Left(*d - 1))),
-                    Trace::Right(1) => (Location {x: loc.x + 1, y: loc.y}, None),
-                    Trace::Right(d) => (Location {x: loc.x + 1, y: loc.y}, Some(Trace::Right(*d - 1))),
-                };
-
-                self.location = Some(nloc);
-                if let Some(nntrace) = ntrace {
-                    *trace = nntrace;
-                } else {
-                    self.path.remove(0);
+    let mut dist = 0usize;
+    let mut step = 0usize;
+    for (i, l) in trace1.iter().enumerate() {
+        for (j, k) in trace2.iter().enumerate() {
+            if l == k && l.dist() > 0 {
+                if dist == 0 || dist > l.dist() {
+                    dist = l.dist();
                 }
-            } else {
-                return None;
+                if step == 0 || step > i + j {
+                    step = i + j;
+                }
             }
-        } else {
-            self.location = Some(Location::central());
         }
-        self.location
     }
+    (dist, step)
 }
 
 #[cfg(test)]
 #[test]
-fn test_path_iterator() {
-    let path = Path(vec![Trace::Left(2000)]);
-    assert!(path.into_iter().all(|l| l.distance() <= 2000));
+fn test_path_crossing() {
+    assert_eq!(nearest_crossing(
+        &Path::parse("R8,U5,L5,D3").unwrap(),
+        &Path::parse("U7,R6,D4,L4").unwrap()
+    ), (6, 30));
+    assert_eq!(nearest_crossing(
+        &Path::parse("R75,D30,R83,U83,L12,D49,R71,U7,L72").unwrap(),
+        &Path::parse("U62,R66,U55,R34,D71,R55,D58,R83").unwrap()
+    ), (159, 610));
+    assert_eq!(nearest_crossing(
+        &Path::parse("R98,U47,R26,D63,R33,U87,L62,D20,R33,U53,R51").unwrap(),
+        &Path::parse("U98,R91,D20,R16,D67,R40,U7,R15,U6,R7").unwrap()
+    ), (135, 410));
 }
 
-#[derive(Debug)]
-struct Crossing {
-    pub distance: isize,
-    pub steps: usize,
-}
 
-pub fn solution(data: &str) -> Result<(isize, usize)> {
-    let mut lines = data.lines().map(|s| Path::parse(s)).collect::<Result<Vec<_>, _>>()?;
-
-    let loc1 = lines.remove(0).into_iter().collect::<Vec<Location>>();
-    let loc2 = lines.remove(0).into_iter().collect::<Vec<Location>>();
-
-    let mut cross = Vec::<Crossing>::new();
-    for (i, l) in loc1.iter().enumerate() {
-        for (j, k) in loc2.iter().enumerate() {
-            if l == k && l.distance() > 0 {
-                cross.push(Crossing {distance: l.distance(), steps: i + j});
-            }
-        }
-    }
-    Ok((cross.iter().map(|c| c.distance).min().unwrap(), cross.iter().map(|c| c.steps).min().unwrap()))
+pub fn solution(data: &str) -> Result<(usize, usize)> {
+    let paths = data.lines().map(|s| Path::parse(s)).collect::<Result<Vec<_>, _>>()?;
+    Ok(nearest_crossing(&paths[0], &paths[1]))
 }
