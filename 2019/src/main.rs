@@ -16,9 +16,10 @@ macro_rules! solution {
 solution! { 
     day1,
     day2,
-    day3
+    day3,
+    day4
 }
 
 fn main() -> anyhow::Result<()> {
-    day3()
+    day4()
 }
