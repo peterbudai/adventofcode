@@ -1,4 +1,5 @@
 use anyhow::Result;
+#[cfg(test)]
 use indoc::indoc;
 use std::collections::HashMap;
 

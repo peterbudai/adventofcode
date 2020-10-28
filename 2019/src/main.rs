@@ -1,3 +1,5 @@
+mod intcode;
+
 macro_rules! solution {
     {$($day: ident),*} => {
         $(
@@ -23,5 +25,5 @@ solution! {
 }
 
 fn main() -> anyhow::Result<()> {
-    day6()
+    day5()
 }
