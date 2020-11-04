@@ -4,6 +4,7 @@ use anyhow::{anyhow, ensure, Result};
 pub struct Computer {
     memory: Vec<isize>,
     ip: usize,
+    base: isize,
     input: Vec<isize>,
     output: Vec<isize>,
 }
@@ -20,6 +21,7 @@ impl Computer {
         Computer { 
             memory: code.to_owned(),
             ip: 0,
+            base: 0,
             input: Vec::new(),
             output: Vec::new(),
         }
@@ -64,6 +66,25 @@ impl Computer {
         }
     }
 
+    fn mem(&self, pos: isize) -> Result<&isize> {
+        ensure!(pos >= 0, "Negative address");
+
+        if pos as usize >= self.memory.len() { 
+            Ok(&0) 
+        } else { 
+            Ok(&self.memory[pos as usize]) 
+        }
+    }
+
+    fn mem_mut(&mut self, pos: isize) -> Result<&mut isize> {
+        ensure!(pos >= 0, "Negative address");
+
+        if pos as usize >= self.memory.len() {
+            self.memory.resize(pos as usize + 1, 0);
+        }
+        Ok(&mut self.memory[pos as usize])
+    }
+
     fn param(&self, idx: u32) -> Result<&isize> {
         ensure!(self.ip + (idx as usize) < self.memory.len(), "Out of bounds");
 
@@ -71,13 +92,12 @@ impl Computer {
             Mode::Immediate => Ok(&self.memory[self.ip + idx as usize]),
             Mode::Position => {
                 let p = self.memory[self.ip + idx as usize];
-                if p as usize >= self.memory.len() { 
-                    Ok(&0) 
-                } else { 
-                    Ok(&self.memory[p as usize]) 
-                }
+                self.mem(p)
             },
-            _ => unimplemented!(),
+            Mode::Relative => {
+                let p = self.base + self.memory[self.ip + idx as usize];
+                self.mem(p)
+            },
         }
     }
     
@@ -88,12 +108,12 @@ impl Computer {
             Mode::Immediate => Err(anyhow!("Invalid parameter mode")),
             Mode::Position => {
                 let p = self.memory[self.ip + idx as usize];
-                if p as usize >= self.memory.len() {
-                    self.memory.resize(p as usize + 1, 0);
-                }
-                Ok(&mut self.memory[p as usize])
+                self.mem_mut(p)
             }
-            _ => unimplemented!(),
+            Mode::Relative => {
+                let p = self.base + self.memory[self.ip + idx as usize];
+                self.mem_mut(p)
+            },
         }
     }
 
@@ -135,6 +155,10 @@ impl Computer {
             8 => {
                 *self.param_mut(3)? = if *self.param(1)? == *self.param(2)? { 1 } else { 0 };
                 4
+            },
+            9 => {
+                self.base += *self.param(1)?;
+                2
             },
             99 => return Ok(false),
             _ => return Err(anyhow!("Invalid opcode"))
@@ -187,10 +211,11 @@ mod test {
         assert!(c.run().is_ok());
         assert_eq!(c.memory, &[1002,4,3,4,99]);
 
-        let mut c = Computer::load(&[203,1985,9,8,109,19,204,-34,2000]);
+        let mut c = Computer::load(&[203,1985,9,9,109,19,204,-34,99,2000]);
         c.set_input(&[5]);
         assert!(c.run().is_ok());
-        assert_eq!(&c.memory[0..=8], &[203,1985,9,8,109,19,204,-34,2000]);
+        assert_eq!(&c.memory[0..=9], &[203,1985,9,9,109,19,204,-34,99,2000]);
+        assert_eq!(&c.memory[10..1985], &[0; 1975]);
         assert_eq!(c.memory[1985], 5);
         assert_eq!(c.get_output().unwrap(), 5);
     }
