@@ -8,6 +8,13 @@ pub struct Computer {
     output: Vec<isize>,
 }
 
+#[derive(Debug, PartialEq)]
+enum Mode {
+    Immediate,
+    Position,
+    Relative,
+}
+
 impl Computer {
     pub fn load(code: &[isize]) -> Self {
         Computer { 
@@ -49,7 +56,19 @@ impl Computer {
     }
     
     fn is_param_immediate(&self, param_idx: u32) -> bool {
-        self.memory[self.ip] / 10isize.pow(param_idx + 1) % 10 != 0
+        match self.param_mode(param_idx).unwrap() {
+            Mode::Immediate => true,
+            _ => false,
+        }
+    }
+
+    fn param_mode(&self, param_idx: u32) -> Result<Mode> {
+        match self.memory[self.ip] / 10isize.pow(param_idx + 1) % 10 {
+            0 => Ok(Mode::Position),
+            1 => Ok(Mode::Immediate),
+            2 => Ok(Mode::Relative),
+            _ => return Err(anyhow!("Invalid parameter mode"))
+        }
     }
 
     fn param(&self, idx: u32) -> Result<&isize> {
@@ -138,14 +157,27 @@ impl Computer {
 
 #[cfg(test)]
 mod test {
-    use super::Computer;
+    use super::{Computer, Mode};
     
     #[test]
-    fn immediate() {
+    fn param_mode_decode() {
         let c = Computer::load(&[1002]);
         assert!(!c.is_param_immediate(1));
         assert!(c.is_param_immediate(2));
         assert!(!c.is_param_immediate(3));
+        assert_eq!(c.param_mode(1).unwrap(), Mode::Position);
+        assert_eq!(c.param_mode(2).unwrap(), Mode::Immediate);
+        assert_eq!(c.param_mode(3).unwrap(), Mode::Position);
+
+        let c = Computer::load(&[204]);
+        assert_eq!(c.param_mode(1).unwrap(), Mode::Relative);
+        assert_eq!(c.param_mode(2).unwrap(), Mode::Position);
+
+        let c = Computer::load(&[321004]);
+        assert_eq!(c.param_mode(1).unwrap(), Mode::Position);
+        assert_eq!(c.param_mode(2).unwrap(), Mode::Immediate);
+        assert_eq!(c.param_mode(3).unwrap(), Mode::Relative);
+        assert!(c.param_mode(4).is_err());
     }
     
     #[test]
