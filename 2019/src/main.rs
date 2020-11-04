@@ -8,7 +8,7 @@ macro_rules! solution {
         #[allow(dead_code)]
         fn $day() -> anyhow::Result<()> {
             let (a, b) = $day::solution(&std::fs::read_to_string(format!("data/{}.txt", stringify!($day)))?)?;
-            println!("{}: {:?} {:?}", stringify!($day), a, b);
+            println!("{}: {:} {:}", stringify!($day), a, b);
             Ok(())
         }
         )*
@@ -22,9 +22,10 @@ solution! {
     day4,
     day5,
     day6,
-    day7
+    day7,
+    day8
 }
 
 fn main() -> anyhow::Result<()> {
-    day7()
+    day8()
 }
