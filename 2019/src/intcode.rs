@@ -10,7 +10,7 @@ pub struct Computer {
 }
 
 #[derive(Debug, PartialEq)]
-enum Mode {
+enum Param {
     Immediate,
     Position,
     Relative,
@@ -57,15 +57,6 @@ impl Computer {
         Ok(self.memory[self.ip] % 100)
     }
     
-    fn param_mode(&self, param_idx: u32) -> Result<Mode> {
-        match self.memory[self.ip] / 10isize.pow(param_idx + 1) % 10 {
-            0 => Ok(Mode::Position),
-            1 => Ok(Mode::Immediate),
-            2 => Ok(Mode::Relative),
-            _ => return Err(anyhow!("Invalid parameter mode"))
-        }
-    }
-
     fn mem(&self, pos: isize) -> Result<&isize> {
         ensure!(pos >= 0, "Negative address");
 
@@ -85,16 +76,25 @@ impl Computer {
         Ok(&mut self.memory[pos as usize])
     }
 
-    fn param(&self, idx: u32) -> Result<&isize> {
-        ensure!(self.ip + (idx as usize) < self.memory.len(), "Out of bounds");
+    fn param_mode(&self, idx: u32) -> Result<Param> {
+        ensure!(self.ip + (idx as usize) < self.memory.len(), "Missing parameter");
 
+        match self.memory[self.ip] / 10isize.pow(idx + 1) % 10 {
+            0 => Ok(Param::Position),
+            1 => Ok(Param::Immediate),
+            2 => Ok(Param::Relative),
+            _ => return Err(anyhow!("Invalid parameter mode"))
+        }
+    }
+
+    fn param(&self, idx: u32) -> Result<&isize> {
         match self.param_mode(idx)? {
-            Mode::Immediate => Ok(&self.memory[self.ip + idx as usize]),
-            Mode::Position => {
+            Param::Immediate => Ok(&self.memory[self.ip + idx as usize]),
+            Param::Position => {
                 let p = self.memory[self.ip + idx as usize];
                 self.mem(p)
             },
-            Mode::Relative => {
+            Param::Relative => {
                 let p = self.base + self.memory[self.ip + idx as usize];
                 self.mem(p)
             },
@@ -102,15 +102,13 @@ impl Computer {
     }
     
     fn param_mut(&mut self, idx: u32) -> Result<&mut isize> {
-        ensure!(self.ip + (idx as usize) < self.memory.len(), "Out of bounds");
-
         match self.param_mode(idx)? {
-            Mode::Immediate => Err(anyhow!("Invalid parameter mode")),
-            Mode::Position => {
+            Param::Immediate => Err(anyhow!("Illegal parameter mode")),
+            Param::Position => {
                 let p = self.memory[self.ip + idx as usize];
                 self.mem_mut(p)
             }
-            Mode::Relative => {
+            Param::Relative => {
                 let p = self.base + self.memory[self.ip + idx as usize];
                 self.mem_mut(p)
             },
@@ -185,23 +183,23 @@ impl Computer {
 
 #[cfg(test)]
 mod test {
-    use super::{Computer, Mode};
+    use super::{Computer, Param};
     
     #[test]
     fn param_mode_decode() {
-        let c = Computer::load(&[1002]);
-        assert_eq!(c.param_mode(1).unwrap(), Mode::Position);
-        assert_eq!(c.param_mode(2).unwrap(), Mode::Immediate);
-        assert_eq!(c.param_mode(3).unwrap(), Mode::Position);
+        let c = Computer::load(&[1002,0,0,0]);
+        assert_eq!(c.param_mode(1).unwrap(), Param::Position);
+        assert_eq!(c.param_mode(2).unwrap(), Param::Immediate);
+        assert_eq!(c.param_mode(3).unwrap(), Param::Position);
 
-        let c = Computer::load(&[204]);
-        assert_eq!(c.param_mode(1).unwrap(), Mode::Relative);
-        assert_eq!(c.param_mode(2).unwrap(), Mode::Position);
+        let c = Computer::load(&[204,0,0]);
+        assert_eq!(c.param_mode(1).unwrap(), Param::Relative);
+        assert_eq!(c.param_mode(2).unwrap(), Param::Position);
 
-        let c = Computer::load(&[321004]);
-        assert_eq!(c.param_mode(1).unwrap(), Mode::Position);
-        assert_eq!(c.param_mode(2).unwrap(), Mode::Immediate);
-        assert_eq!(c.param_mode(3).unwrap(), Mode::Relative);
+        let c = Computer::load(&[321004,0,0,0,0]);
+        assert_eq!(c.param_mode(1).unwrap(), Param::Position);
+        assert_eq!(c.param_mode(2).unwrap(), Param::Immediate);
+        assert_eq!(c.param_mode(3).unwrap(), Param::Relative);
         assert!(c.param_mode(4).is_err());
     }
     
