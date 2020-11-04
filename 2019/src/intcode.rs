@@ -55,13 +55,6 @@ impl Computer {
         Ok(self.memory[self.ip] % 100)
     }
     
-    fn is_param_immediate(&self, param_idx: u32) -> bool {
-        match self.param_mode(param_idx).unwrap() {
-            Mode::Immediate => true,
-            _ => false,
-        }
-    }
-
     fn param_mode(&self, param_idx: u32) -> Result<Mode> {
         match self.memory[self.ip] / 10isize.pow(param_idx + 1) % 10 {
             0 => Ok(Mode::Position),
@@ -74,29 +67,33 @@ impl Computer {
     fn param(&self, idx: u32) -> Result<&isize> {
         ensure!(self.ip + (idx as usize) < self.memory.len(), "Out of bounds");
 
-        if self.is_param_immediate(idx) {
-            Ok(&self.memory[self.ip + idx as usize])
-        } else {
-            let p = self.memory[self.ip + idx as usize];
-            if p as usize >= self.memory.len() { 
-                Ok(&0) 
-            } else { 
-                Ok(&self.memory[p as usize]) 
-            }
+        match self.param_mode(idx)? {
+            Mode::Immediate => Ok(&self.memory[self.ip + idx as usize]),
+            Mode::Position => {
+                let p = self.memory[self.ip + idx as usize];
+                if p as usize >= self.memory.len() { 
+                    Ok(&0) 
+                } else { 
+                    Ok(&self.memory[p as usize]) 
+                }
+            },
+            _ => unimplemented!(),
         }
     }
     
     fn param_mut(&mut self, idx: u32) -> Result<&mut isize> {
         ensure!(self.ip + (idx as usize) < self.memory.len(), "Out of bounds");
 
-        if self.is_param_immediate(idx) {
-            Err(anyhow!("Invalid parameter mode"))
-        } else {
-            let p = self.memory[self.ip + idx as usize];
-            if p as usize >= self.memory.len() {
-                self.memory.resize(p as usize + 1, 0);
+        match self.param_mode(idx)? {
+            Mode::Immediate => Err(anyhow!("Invalid parameter mode")),
+            Mode::Position => {
+                let p = self.memory[self.ip + idx as usize];
+                if p as usize >= self.memory.len() {
+                    self.memory.resize(p as usize + 1, 0);
+                }
+                Ok(&mut self.memory[p as usize])
             }
-            Ok(&mut self.memory[p as usize])
+            _ => unimplemented!(),
         }
     }
 
