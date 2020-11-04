@@ -78,7 +78,11 @@ impl Computer {
             Ok(&self.memory[self.ip + idx as usize])
         } else {
             let p = self.memory[self.ip + idx as usize];
-            Ok(&self.memory[p as usize])
+            if p as usize >= self.memory.len() { 
+                Ok(&0) 
+            } else { 
+                Ok(&self.memory[p as usize]) 
+            }
         }
     }
     
@@ -89,6 +93,9 @@ impl Computer {
             Err(anyhow!("Invalid parameter mode"))
         } else {
             let p = self.memory[self.ip + idx as usize];
+            if p as usize >= self.memory.len() {
+                self.memory.resize(p as usize + 1, 0);
+            }
             Ok(&mut self.memory[p as usize])
         }
     }
