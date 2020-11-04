@@ -275,7 +275,7 @@ mod test {
     }
 
     #[test]
-    fn test_run_branching() {
+    fn branching() {
         let mut b = Computer::load(&[3,9,8,9,10,9,4,9,99,-1,8]);
 
         let mut c = b.clone();
@@ -372,5 +372,21 @@ mod test {
         c.set_input(&[9]);
         assert!(c.run_until_output().unwrap());
         assert_eq!(c.output, &[1001]);
+    }
+
+    #[test]
+    fn large_num_and_mem_support() {
+        let quine = [109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99];
+        let mut c = Computer::load(&quine);
+        assert!(c.run().is_ok());
+        assert_eq!(&c.output, &quine);
+
+        c = Computer::load(&[1102,34915192,34915192,7,4,7,99,0]);
+        assert!(c.run().is_ok());
+        assert_eq!(c.get_output().unwrap().to_string().len(), 16);
+
+        c = Computer::load(&[104,1125899906842624,99]);
+        assert!(c.run().is_ok());
+        assert_eq!(c.get_output().unwrap(), 1125899906842624);
     }
 }
