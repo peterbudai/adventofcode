@@ -24,9 +24,10 @@ solution! {
     day6,
     day7,
     day8,
-    day9
+    day9,
+    day10
 }
 
 fn main() -> anyhow::Result<()> {
-    day9()
+    day10()
 }
