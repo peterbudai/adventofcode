@@ -10,10 +10,10 @@ pub struct Computer {
 }
 
 #[derive(Debug, PartialEq)]
-enum Param {
-    Immediate,
-    Position,
-    Relative,
+enum Param<'a> {
+    Immediate(&'a isize),
+    Position(&'a isize),
+    Relative(&'a isize),
 }
 
 impl Computer {
@@ -77,39 +77,33 @@ impl Computer {
     }
 
     fn param_mode(&self, idx: u32) -> Result<Param> {
-        ensure!(self.ip + (idx as usize) < self.memory.len(), "Missing parameter");
+        let value = self.memory.get(self.ip + (idx as usize)).ok_or(anyhow!("Missing parameter"))?;
 
         match self.memory[self.ip] / 10isize.pow(idx + 1) % 10 {
-            0 => Ok(Param::Position),
-            1 => Ok(Param::Immediate),
-            2 => Ok(Param::Relative),
+            0 => Ok(Param::Position(value)),
+            1 => Ok(Param::Immediate(value)),
+            2 => Ok(Param::Relative(value)),
             _ => return Err(anyhow!("Invalid parameter mode"))
         }
     }
 
     fn param(&self, idx: u32) -> Result<&isize> {
         match self.param_mode(idx)? {
-            Param::Immediate => Ok(&self.memory[self.ip + idx as usize]),
-            Param::Position => {
-                let p = self.memory[self.ip + idx as usize];
-                self.mem(p)
-            },
-            Param::Relative => {
-                let p = self.base + self.memory[self.ip + idx as usize];
-                self.mem(p)
-            },
+            Param::Immediate(v) => Ok(v),
+            Param::Position(v) => self.mem(*v),
+            Param::Relative(v) => self.mem(self.base + *v),
         }
     }
     
     fn param_mut(&mut self, idx: u32) -> Result<&mut isize> {
         match self.param_mode(idx)? {
-            Param::Immediate => Err(anyhow!("Illegal parameter mode")),
-            Param::Position => {
-                let p = self.memory[self.ip + idx as usize];
+            Param::Immediate(_) => Err(anyhow!("Illegal parameter mode")),
+            Param::Position(v) => {
+                let p = *v;
                 self.mem_mut(p)
             }
-            Param::Relative => {
-                let p = self.base + self.memory[self.ip + idx as usize];
+            Param::Relative(v) => {
+                let p = self.base + *v;
                 self.mem_mut(p)
             },
         }
@@ -187,19 +181,19 @@ mod test {
     
     #[test]
     fn param_mode_decode() {
-        let c = Computer::load(&[1002,0,0,0]);
-        assert_eq!(c.param_mode(1).unwrap(), Param::Position);
-        assert_eq!(c.param_mode(2).unwrap(), Param::Immediate);
-        assert_eq!(c.param_mode(3).unwrap(), Param::Position);
+        let c = Computer::load(&[1002,0,1,2]);
+        assert_eq!(c.param_mode(1).unwrap(), Param::Position(&0));
+        assert_eq!(c.param_mode(2).unwrap(), Param::Immediate(&1));
+        assert_eq!(c.param_mode(3).unwrap(), Param::Position(&2));
 
-        let c = Computer::load(&[204,0,0]);
-        assert_eq!(c.param_mode(1).unwrap(), Param::Relative);
-        assert_eq!(c.param_mode(2).unwrap(), Param::Position);
+        let c = Computer::load(&[204,0,1]);
+        assert_eq!(c.param_mode(1).unwrap(), Param::Relative(&0));
+        assert_eq!(c.param_mode(2).unwrap(), Param::Position(&1));
 
-        let c = Computer::load(&[321004,0,0,0,0]);
-        assert_eq!(c.param_mode(1).unwrap(), Param::Position);
-        assert_eq!(c.param_mode(2).unwrap(), Param::Immediate);
-        assert_eq!(c.param_mode(3).unwrap(), Param::Relative);
+        let c = Computer::load(&[321004,0,1,2,3]);
+        assert_eq!(c.param_mode(1).unwrap(), Param::Position(&0));
+        assert_eq!(c.param_mode(2).unwrap(), Param::Immediate(&1));
+        assert_eq!(c.param_mode(3).unwrap(), Param::Relative(&2));
         assert!(c.param_mode(4).is_err());
     }
     
