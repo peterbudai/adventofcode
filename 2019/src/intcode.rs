@@ -162,9 +162,6 @@ mod test {
     #[test]
     fn param_mode_decode() {
         let c = Computer::load(&[1002]);
-        assert!(!c.is_param_immediate(1));
-        assert!(c.is_param_immediate(2));
-        assert!(!c.is_param_immediate(3));
         assert_eq!(c.param_mode(1).unwrap(), Mode::Position);
         assert_eq!(c.param_mode(2).unwrap(), Mode::Immediate);
         assert_eq!(c.param_mode(3).unwrap(), Mode::Position);
@@ -185,6 +182,13 @@ mod test {
         let mut c = Computer::load(&[1002,4,3,4,33]);
         assert!(c.run().is_ok());
         assert_eq!(c.memory, &[1002,4,3,4,99]);
+
+        let mut c = Computer::load(&[203,1985,9,8,109,19,204,-34,2000]);
+        c.set_input(&[5]);
+        assert!(c.run().is_ok());
+        assert_eq!(&c.memory[0..=8], &[203,1985,9,8,109,19,204,-34,2000]);
+        assert_eq!(c.memory[1985], 5);
+        assert_eq!(c.get_output().unwrap(), 5);
     }
 
     #[test]
