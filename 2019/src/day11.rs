@@ -1,15 +1,7 @@
 use anyhow::{anyhow, Result};
-use crate::intcode::Computer;
 use std::collections::HashMap;
-
-type Coord = (isize, isize);
-
-enum Direction {
-    Up,
-    Left,
-    Down,
-    Right,
-}
+use crate::intcode::Computer;
+use crate::util::{Coord, Direction};
 
 struct Robot {
     computer: Computer,

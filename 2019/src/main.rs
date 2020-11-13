@@ -1,3 +1,4 @@
+mod util;
 mod intcode;
 
 macro_rules! solution {

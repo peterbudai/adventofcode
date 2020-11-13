@@ -1,23 +1,8 @@
 use anyhow::Result;
+use crate::util::Coord;
 
-#[derive(Debug, Clone, Copy, PartialEq)]
-struct Pos {
-    pub x: isize,
-    pub y: isize,
-}
-
-impl Pos {
-    pub fn new(x: isize, y: isize) -> Self {
-        Pos { x, y }
-    }
-
-    pub fn central() -> Self {
-        Pos { x: 0, y: 0 }
-    }
-
-    pub fn dist(&self) -> usize {
-        self.x.abs() as usize + self.y.abs() as usize
-    }
+fn manhattan_distance((x, y): &Coord) -> usize {
+    x.abs() as usize + y.abs() as usize
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -53,9 +38,9 @@ impl Path {
         s.split(',').filter_map(|s| if s.is_empty() { None } else { Some(Dir::parse(s))}).collect::<Result<Vec<_>, _>>().map(|v| Path(v))
     }
 
-    pub fn trace(&self) -> Vec<Pos> {
-        let mut trace = Vec::<Pos>::new();
-        trace.push(Pos::central());
+    pub fn trace(&self) -> Vec<Coord> {
+        let mut trace = Vec::<Coord>::new();
+        trace.push((0, 0));
 
         for dir in &self.0 {
             let (d, dx, dy) = match dir {
@@ -64,9 +49,9 @@ impl Path {
                 Dir::Left(d) => (d, -1isize, 0isize),
                 Dir::Right(d) => (d, 1isize, 0isize),
             };
-            let last = *trace.last().unwrap();
+            let (lastx, lasty) = *trace.last().unwrap();
             for i in 1..(*d as isize)+1 {
-                trace.push(Pos::new(last.x + dx * i, last.y + dy * i))
+                trace.push((lastx + dx * i, lasty + dy * i))
             }
         }
         trace
@@ -81,9 +66,9 @@ fn nearest_crossing(path1: &Path, path2: &Path) -> (usize, usize) {
     let mut step = 0usize;
     for (i, l) in trace1.iter().enumerate() {
         for (j, k) in trace2.iter().enumerate() {
-            if l == k && l.dist() > 0 {
-                if dist == 0 || dist > l.dist() {
-                    dist = l.dist();
+            if l == k && manhattan_distance(l) > 0 {
+                if dist == 0 || dist > manhattan_distance(l) {
+                    dist = manhattan_distance(l);
                 }
                 if step == 0 || step > i + j {
                     step = i + j;
@@ -105,11 +90,11 @@ mod test {
     
     #[test]
     fn distance() {
-        assert_eq!(Pos::central().dist(), 0);
-        assert_eq!(Pos::new(1, 0).dist(), 1);
-        assert_eq!(Pos::new(0, -1).dist(), 1);
-        assert_eq!(Pos::new(1, 1).dist(), 2);
-        assert_eq!(Pos::new(-2, 1).dist(), 3);
+        assert_eq!(manhattan_distance(&(0, 0)), 0);
+        assert_eq!(manhattan_distance(&(1, 0)), 1);
+        assert_eq!(manhattan_distance(&(0, -1)), 1);
+        assert_eq!(manhattan_distance(&(1, 1)), 2);
+        assert_eq!(manhattan_distance(&(-2, 1)), 3);
     }
     
     #[test]
@@ -138,9 +123,9 @@ mod test {
     #[test]
     fn path_trace() {
         let mut path = Path(vec![Dir::Right(2000)]);
-        assert!(path.trace().iter().enumerate().all(|(i, l)| l.x == i as isize && l.y == 0));
+        assert!(path.trace().iter().enumerate().all(|(i, (x,y))| *x == i as isize && *y == 0));
         path = Path(vec![Dir::Up(1), Dir::Right(2), Dir::Down(3), Dir::Left(4)]);
-        assert_eq!(path.trace(), vec![Pos::central(), Pos::new(0,1), Pos::new(1,1),Pos::new(2,1),Pos::new(2,0),Pos::new(2,-1),Pos::new(2,-2),Pos::new(1,-2),Pos::new(0,-2),Pos::new(-1,-2),Pos::new(-2,-2)]);
+        assert_eq!(path.trace(), vec![(0, 0), (0,1), (1,1), (2,1), (2,0), (2,-1), (2,-2), (1,-2), (0,-2), (-1,-2), (-2,-2)]);
     }    
 
     #[test]

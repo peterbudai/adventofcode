@@ -3,8 +3,7 @@ use approx::abs_diff_eq;
 use itertools::Itertools;
 use std::cmp::Ordering;
 use std::f64::consts::{PI, FRAC_PI_2};
-
-type Coord = (isize, isize);
+use crate::util::Coord;
 
 fn coord_to_num(coord: &Coord) -> Result<usize> {
     ensure!(coord.0 >= 0 && coord.1 >= 0, "Only works with unsigned coordinates");

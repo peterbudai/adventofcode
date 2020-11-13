@@ -1,6 +1,4 @@
 use anyhow::Result;
-#[cfg(test)]
-use indoc::indoc;
 use std::collections::HashMap;
 
 fn parse_map(data: &str) -> HashMap<&str, &str> {
@@ -54,6 +52,7 @@ pub fn solution(data: &str) -> Result<(usize, usize)> {
 #[cfg(test)]
 mod test {
     use super::*;
+    use indoc::indoc;
 
     #[test]
     fn to_com() {
