@@ -177,7 +177,7 @@ impl Computer {
 
 #[cfg(test)]
 mod test {
-    use super::{Computer, Param};
+    use super::*;
     
     #[test]
     fn param_mode_decode() {

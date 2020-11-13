@@ -19,33 +19,6 @@ fn route_to_com<'a>(orbits: &'a HashMap::<&str, &str>, start: &'a str) -> Vec<&'
     route
 }
 
-#[cfg(test)]
-#[test]
-fn test_route_to_com() {
-    //         G - H       J - K - L
-    //        /           /
-    // COM - B - C - D - E - F
-    //                \
-    //                 I
-    let map = parse_map(indoc! {"COM)B
-        B)C
-        C)D
-        D)E
-        E)F
-        B)G
-        G)H
-        D)I
-        E)J
-        J)K
-        K)L"});
-
-    assert_eq!(route_to_com(&map, "D"), &["C", "B", "COM"]);
-    assert_eq!(route_to_com(&map, "D").len(), 3);
-    assert_eq!(route_to_com(&map, "L"), &["K", "J", "E", "D", "C", "B", "COM"]);
-    assert_eq!(route_to_com(&map, "L").len(), 7);
-    assert!(route_to_com(&map, "COM").is_empty());
-}
- 
 fn route_between<'a>(orbits: &'a HashMap::<&str, &str>, start: &'a str, end: &'a str) -> Vec<&'a str> {
     let mut route1 = route_to_com(orbits, start);
     let mut route2 = route_to_com(orbits, end);
@@ -73,41 +46,71 @@ fn route_between<'a>(orbits: &'a HashMap::<&str, &str>, start: &'a str, end: &'a
     route1
 }
 
-#[cfg(test)]
-#[test]
-fn test_route_between() {
-    //                           YOU
-    //                          /
-    //         G - H       J - K - L
-    //        /           /
-    // COM - B - C - D - E - F
-    //                \
-    //                 I - SAN
-    let map = parse_map(indoc! {"COM)B
-        B)C
-        C)D
-        D)E
-        E)F
-        B)G
-        G)H
-        D)I
-        E)J
-        J)K
-        K)L
-        K)YOU
-        I)SAN"});
-
-    assert_eq!(route_between(&map, "YOU", "SAN"), &["K", "J", "E", "D", "I"]);
-    assert_eq!(route_between(&map, "SAN", "YOU"), &["I", "D", "E", "J", "K"]);
-    assert_eq!(route_between(&map, "E","I"), &["D"]);
-    assert_eq!(route_between(&map, "I","E"), &["D"]);
-
-    assert_eq!(route_between(&map, "B","H"), &["G"]);
-    assert_eq!(route_between(&map, "F","C"), &["E", "D"]);
-    assert_eq!(route_between(&map, "C","F"), &["D", "E"]);
-}
- 
 pub fn solution(data: &str) -> Result<(usize, usize)> {
     let orbits = parse_map(data);
     Ok((orbits.keys().map(|k| route_to_com(&orbits, k).len()).sum(), route_between(&orbits, "YOU", "SAN").len()-1))
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn to_com() {
+        //         G - H       J - K - L
+        //        /           /
+        // COM - B - C - D - E - F
+        //                \
+        //                 I
+        let map = parse_map(indoc! {"COM)B
+            B)C
+            C)D
+            D)E
+            E)F
+            B)G
+            G)H
+            D)I
+            E)J
+            J)K
+            K)L"});
+
+        assert_eq!(route_to_com(&map, "D"), &["C", "B", "COM"]);
+        assert_eq!(route_to_com(&map, "D").len(), 3);
+        assert_eq!(route_to_com(&map, "L"), &["K", "J", "E", "D", "C", "B", "COM"]);
+        assert_eq!(route_to_com(&map, "L").len(), 7);
+        assert!(route_to_com(&map, "COM").is_empty());
+    }
+
+    #[test]
+    fn between() {
+        //                           YOU
+        //                          /
+        //         G - H       J - K - L
+        //        /           /
+        // COM - B - C - D - E - F
+        //                \
+        //                 I - SAN
+        let map = parse_map(indoc! {"COM)B
+            B)C
+            C)D
+            D)E
+            E)F
+            B)G
+            G)H
+            D)I
+            E)J
+            J)K
+            K)L
+            K)YOU
+            I)SAN"});
+    
+        assert_eq!(route_between(&map, "YOU", "SAN"), &["K", "J", "E", "D", "I"]);
+        assert_eq!(route_between(&map, "SAN", "YOU"), &["I", "D", "E", "J", "K"]);
+        assert_eq!(route_between(&map, "E","I"), &["D"]);
+        assert_eq!(route_between(&map, "I","E"), &["D"]);
+    
+        assert_eq!(route_between(&map, "B","H"), &["G"]);
+        assert_eq!(route_between(&map, "F","C"), &["E", "D"]);
+        assert_eq!(route_between(&map, "C","F"), &["D", "E"]);
+    }
 }

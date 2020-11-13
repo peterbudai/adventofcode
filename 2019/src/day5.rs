@@ -10,6 +10,5 @@ fn run_input(code: &[isize], input: isize) -> Result<isize> {
 
 pub fn solution(data: &str) -> Result<(isize, isize)> {
     let code  = data.split(',').map(|s| s.parse::<isize>()).collect::<Result<Vec<_>,_>>()?;
-
     Ok((run_input(&code, 1)?, run_input(&code, 5)?))
 }
