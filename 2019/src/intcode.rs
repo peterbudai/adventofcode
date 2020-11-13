@@ -31,23 +31,15 @@ impl Computer {
         self.input.push(data);
     }
 
-    pub fn set_input(&mut self, data: &[isize]) {
-        self.input = data.to_owned();
+    pub fn pop_output(&mut self) -> Result<isize> {
+        self.output.pop().ok_or(anyhow!("Empty output"))
     }
 
     pub fn set_noun_verb(&mut self, noun: isize, verb: isize) {
         self.memory[1] = noun;
         self.memory[2] = verb;
-    }
+    }    
     
-    pub fn pop_output(&mut self) -> Result<isize> {
-        self.output.pop().ok_or(anyhow!("Empty output"))
-    }
-
-    pub fn get_output(&self) -> Result<isize> {
-        self.output.last().copied().ok_or(anyhow!("Empty output"))
-    }
-
     pub fn get_result(&self) -> isize {
         self.memory[0]
     }
@@ -204,12 +196,12 @@ mod test {
         assert_eq!(c.memory, &[1002,4,3,4,99]);
 
         let mut c = Computer::load(&[203,1985,9,9,109,19,204,-34,99,2000]);
-        c.set_input(&[5]);
+        c.push_input(5);
         assert!(c.run().is_ok());
         assert_eq!(&c.memory[0..=9], &[203,1985,9,9,109,19,204,-34,99,2000]);
         assert_eq!(&c.memory[10..1985], &[0; 1975]);
         assert_eq!(c.memory[1985], 5);
-        assert_eq!(c.get_output().unwrap(), 5);
+        assert_eq!(c.pop_output().unwrap(), 5);
     }
 
     #[test]
@@ -258,12 +250,12 @@ mod test {
     #[test]
     fn input_output() {
         let mut c = Computer::load(&[3,0,4,0,99]);
-        c.set_input(&[7]);
+        c.push_input(7);
         assert!(c.run().is_ok());
         assert_eq!(c.memory, &[7,0,4,0,99]);
         assert_eq!(c.input, &[]);
         assert_eq!(c.output, &[7]);
-        assert_eq!(c.get_output().unwrap(), 7);
+        assert_eq!(c.pop_output().unwrap(), 7);
     }
 
     #[test]
@@ -271,97 +263,97 @@ mod test {
         let mut b = Computer::load(&[3,9,8,9,10,9,4,9,99,-1,8]);
 
         let mut c = b.clone();
-        c.set_input(&[7]);
+        c.push_input(7);
         assert!(c.run_until_output().unwrap());
-        assert_eq!(c.get_output().unwrap(), 0);
+        assert_eq!(c.pop_output().unwrap(), 0);
         let mut c = b.clone();
-        c.set_input(&[8]);
+        c.push_input(8);
         assert!(c.run_until_output().unwrap());
-        assert_eq!(c.get_output().unwrap(), 1);
+        assert_eq!(c.pop_output().unwrap(), 1);
     
         b = Computer::load(&[3,9,7,9,10,9,4,9,99,-1,8]);
     
         let mut c = b.clone();
-        c.set_input(&[7]);
+        c.push_input(7);
         assert!(c.run_until_output().unwrap());
-        assert_eq!(c.get_output().unwrap(), 1);
+        assert_eq!(c.pop_output().unwrap(), 1);
         let mut c = b.clone();
-        c.set_input(&[8]);
+        c.push_input(8);
         assert!(c.run_until_output().unwrap());
-        assert_eq!(c.get_output().unwrap(), 0);
+        assert_eq!(c.pop_output().unwrap(), 0);
         let mut c = b.clone();
-        c.set_input(&[9]);
+        c.push_input(9);
         assert!(c.run_until_output().unwrap());
-        assert_eq!(c.get_output().unwrap(), 0);
+        assert_eq!(c.pop_output().unwrap(), 0);
     
         b = Computer::load(&[3,3,1108,-1,8,3,4,3,99]);
     
         let mut c = b.clone();
-        c.set_input(&[7]);
+        c.push_input(7);
         assert!(c.run_until_output().unwrap());
-        assert_eq!(c.get_output().unwrap(), 0);
+        assert_eq!(c.pop_output().unwrap(), 0);
         let mut c = b.clone();
-        c.set_input(&[8]);
+        c.push_input(8);
         assert!(c.run_until_output().unwrap());
-        assert_eq!(c.get_output().unwrap(), 1);
+        assert_eq!(c.pop_output().unwrap(), 1);
     
         b = Computer::load(&[3,3,1107,-1,8,3,4,3,99]);
     
         let mut c = b.clone();
-        c.set_input(&[7]);
+        c.push_input(7);
         assert!(c.run_until_output().unwrap());
-        assert_eq!(c.get_output().unwrap(), 1);
+        assert_eq!(c.pop_output().unwrap(), 1);
         let mut c = b.clone();
-        c.set_input(&[8]);
+        c.push_input(8);
         assert!(c.run_until_output().unwrap());
-        assert_eq!(c.get_output().unwrap(), 0);
+        assert_eq!(c.pop_output().unwrap(), 0);
         let mut c = b.clone();
-        c.set_input(&[9]);
+        c.push_input(9);
         assert!(c.run_until_output().unwrap());
-        assert_eq!(c.get_output().unwrap(), 0);
+        assert_eq!(c.pop_output().unwrap(), 0);
     
         b = Computer::load(&[3,12,6,12,15,1,13,14,13,4,13,99,-1,0,1,9]);
 
         let mut c = b.clone();
-        c.set_input(&[-1]);
+        c.push_input(-1);
         assert!(c.run().is_ok());
-        assert_eq!(c.get_output().unwrap(), 1);
+        assert_eq!(c.pop_output().unwrap(), 1);
         let mut c = b.clone();
-        c.set_input(&[-0]);
+        c.push_input(-0);
         assert!(c.run().is_ok());
-        assert_eq!(c.get_output().unwrap(), 0);
+        assert_eq!(c.pop_output().unwrap(), 0);
         let mut c = b.clone();
-        c.set_input(&[3]);
+        c.push_input(3);
         assert!(c.run().is_ok());
-        assert_eq!(c.get_output().unwrap(), 1);
+        assert_eq!(c.pop_output().unwrap(), 1);
     
         b = Computer::load(&[3,3,1105,-1,9,1101,0,0,12,4,12,99,1]);
 
         let mut c = b.clone();
-        c.set_input(&[-1]);
+        c.push_input(--1);
         assert!(c.run().is_ok());
-        assert_eq!(c.get_output().unwrap(), 1);
+        assert_eq!(c.pop_output().unwrap(), 1);
         let mut c = b.clone();
-        c.set_input(&[0]);
+        c.push_input(0);
         assert!(c.run().is_ok());
-        assert_eq!(c.get_output().unwrap(), 0);
+        assert_eq!(c.pop_output().unwrap(), 0);
         let mut c = b.clone();
-        c.set_input(&[3]);
+        c.push_input(3);
         assert!(c.run().is_ok());
-        assert_eq!(c.get_output().unwrap(), 1);
+        assert_eq!(c.pop_output().unwrap(), 1);
     
         b = Computer::load(&[3,21,1008,21,8,20,1005,20,22,107,8,21,20,1006,20,31,1106,0,36,98,0,0,1002,21,125,20,4,20,1105,1,46,104,999,1105,1,46,1101,1000,1,20,4,20,1105,1,46,98,99]);
 
         let mut c = b.clone();
-        c.set_input(&[7]);
+        c.push_input(7);
         assert!(c.run_until_output().unwrap());
         assert_eq!(c.output, &[999]);
         let mut c = b.clone();
-        c.set_input(&[8]);
+        c.push_input(8);
         assert!(c.run_until_output().unwrap());
         assert_eq!(c.output, &[1000]);
         let mut c = b.clone();
-        c.set_input(&[9]);
+        c.push_input(9);
         assert!(c.run_until_output().unwrap());
         assert_eq!(c.output, &[1001]);
     }
@@ -375,10 +367,10 @@ mod test {
 
         c = Computer::load(&[1102,34915192,34915192,7,4,7,99,0]);
         assert!(c.run().is_ok());
-        assert_eq!(c.get_output().unwrap().to_string().len(), 16);
+        assert_eq!(c.pop_output().unwrap().to_string().len(), 16);
 
         c = Computer::load(&[104,1125899906842624,99]);
         assert!(c.run().is_ok());
-        assert_eq!(c.get_output().unwrap(), 1125899906842624);
+        assert_eq!(c.pop_output().unwrap(), 1125899906842624);
     }
 }

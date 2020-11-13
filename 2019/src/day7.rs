@@ -8,9 +8,10 @@ fn run_amplifiers_oneshot(code: &[isize], phase_sequence: &[isize]) -> Result<is
     let mut signal = 0;
     for phase in phase_sequence {
         let mut c = computer.clone();
-        c.set_input(&[*phase, signal]);
+        c.push_input(*phase);
+        c.push_input(signal);
         c.run()?;
-        signal = c.get_output()?
+        signal = c.pop_output()?
     }
     Ok(signal)
 }
