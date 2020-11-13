@@ -1,12 +1,12 @@
 use anyhow::{anyhow, Result};
 use std::collections::HashMap;
 use crate::intcode::Computer;
-use crate::util::{Coord, Direction};
+use crate::util::{Coord, Dir};
 
 struct Robot {
     computer: Computer,
     pos: Coord,
-    dir: Direction,
+    dir: Dir,
 }
 
 impl Robot {
@@ -14,7 +14,7 @@ impl Robot {
         Robot {
             computer: Computer::load(code),
             pos: (0, 0),
-            dir: Direction::Up,
+            dir: Dir::Up,
         }
     }
 

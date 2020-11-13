@@ -1,11 +1,11 @@
 use anyhow::Result;
-use crate::util::{Coord, Direction};
+use crate::util::{Coord, Dir};
 
 fn manhattan_distance((x, y): &Coord) -> usize {
     x.abs() as usize + y.abs() as usize
 }
 
-type Step = (Direction, usize);
+type Step = (Dir, usize);
 
 fn parse_step(s: &str) -> Result<Step> {
     anyhow::ensure!(s.len() > 0, "Empty trace");
@@ -14,10 +14,10 @@ fn parse_step(s: &str) -> Result<Step> {
     anyhow::ensure!(dist > 0, "Invalid distance");
 
     let dir = match s.chars().nth(0) {
-        Some('U') => Direction::Up,
-        Some('D') => Direction::Down,
-        Some('L') => Direction::Left,
-        Some('R') => Direction::Right,
+        Some('U') => Dir::Up,
+        Some('D') => Dir::Down,
+        Some('L') => Dir::Left,
+        Some('R') => Dir::Right,
         _ => anyhow::bail!("Invalid direction"),
     };
 
@@ -85,10 +85,10 @@ mod test {
     
     #[test]
     fn step_parse() {
-        assert_eq!(parse_step("U20").unwrap(), (Direction::Up, 20));
-        assert_eq!(parse_step("D2").unwrap(), (Direction::Down, 2));
-        assert_eq!(parse_step("L1").unwrap(), (Direction::Left, 1));
-        assert_eq!(parse_step("R3333").unwrap(), (Direction::Right, 3333));
+        assert_eq!(parse_step("U20").unwrap(), (Dir::Up, 20));
+        assert_eq!(parse_step("D2").unwrap(), (Dir::Down, 2));
+        assert_eq!(parse_step("L1").unwrap(), (Dir::Left, 1));
+        assert_eq!(parse_step("R3333").unwrap(), (Dir::Right, 3333));
     
         assert!(parse_step("X3").is_err());
         assert!(parse_step("U0").is_err());
@@ -98,9 +98,9 @@ mod test {
     #[test]
     fn path_parse() {
         assert_eq!(parse_path("").unwrap(), vec![]);
-        assert_eq!(parse_path("L2").unwrap(), vec![(Direction::Left, 2)]);
-        assert_eq!(parse_path("L2,U4").unwrap(), vec![(Direction::Left, 2), (Direction::Up, 4)]);
-        assert_eq!(parse_path("L2,U4,").unwrap(), vec![(Direction::Left, 2), (Direction::Up, 4)]);
+        assert_eq!(parse_path("L2").unwrap(), vec![(Dir::Left, 2)]);
+        assert_eq!(parse_path("L2,U4").unwrap(), vec![(Dir::Left, 2), (Dir::Up, 4)]);
+        assert_eq!(parse_path("L2,U4,").unwrap(), vec![(Dir::Left, 2), (Dir::Up, 4)]);
     
         assert!(parse_path("X2").is_err());
         assert!(parse_path("L2;U4").is_err());
@@ -108,9 +108,9 @@ mod test {
     
     #[test]
     fn path_trace() {
-        let mut path = vec![(Direction::Right, 2000)];
+        let mut path = vec![(Dir::Right, 2000)];
         assert!(walk_path(&path).iter().enumerate().all(|(i, (x,y))| *x == i as isize && *y == 0));
-        path = vec![(Direction::Up, 1), (Direction::Right, 2), (Direction::Down, 3), (Direction::Left, 4)];
+        path = vec![(Dir::Up, 1), (Dir::Right, 2), (Dir::Down, 3), (Dir::Left, 4)];
         assert_eq!(walk_path(&path), vec![(0, 0), (0,1), (1,1), (2,1), (2,0), (2,-1), (2,-2), (1,-2), (0,-2), (-1,-2), (-2,-2)]);
     }    
 

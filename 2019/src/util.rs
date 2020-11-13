@@ -1,20 +1,20 @@
 pub type Coord = (isize, isize);
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub enum Direction {
+pub enum Dir {
     Up,
     Down,
     Left,
     Right,
 }
 
-impl Direction {
+impl Dir {
     pub fn delta(&self) -> Coord {
         match self {
-            Direction::Up => (0, 1),
-            Direction::Down => (0, -1),
-            Direction::Left => (-1, 0),
-            Direction::Right => (1, 0),
+            Dir::Up => (0, 1),
+            Dir::Down => (0, -1),
+            Dir::Left => (-1, 0),
+            Dir::Right => (1, 0),
         }
     }
 
@@ -25,14 +25,14 @@ impl Direction {
 
     pub fn turn(&self, clockwise: bool) -> Self {
         match self {
-            Direction::Up if clockwise => Direction::Left,
-            Direction::Up => Direction::Right,
-            Direction::Left if clockwise => Direction::Down,
-            Direction::Left => Direction::Up,
-            Direction::Down if clockwise => Direction::Right,
-            Direction::Down => Direction::Left,
-            Direction::Right if clockwise => Direction::Up,
-            Direction::Right => Direction::Down,
+            Dir::Up if clockwise => Dir::Left,
+            Dir::Up => Dir::Right,
+            Dir::Left if clockwise => Dir::Down,
+            Dir::Left => Dir::Up,
+            Dir::Down if clockwise => Dir::Right,
+            Dir::Down => Dir::Left,
+            Dir::Right if clockwise => Dir::Up,
+            Dir::Right => Dir::Down,
         }
     }
 }
