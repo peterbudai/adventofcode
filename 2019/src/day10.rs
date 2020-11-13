@@ -1,19 +1,20 @@
-use anyhow::Result;
+use anyhow::{ensure, Result};
 use approx::abs_diff_eq;
 use itertools::Itertools;
 use std::cmp::Ordering;
 use std::f64::consts::{PI, FRAC_PI_2};
 
-type Coord = (usize, usize);
+type Coord = (isize, isize);
 
-fn coord_to_num(coord: &Coord) -> usize {
-    coord.0 * 100 + coord.1
+fn coord_to_num(coord: &Coord) -> Result<usize> {
+    ensure!(coord.0 >= 0 && coord.1 >= 0, "Only works with unsigned coordinates");
+    Ok(coord.0 as usize * 100 + coord.1 as usize)
 }
 
 fn parse_map(data: &str) -> Vec<Coord> {
     data.lines().enumerate()
         .map(|(y, l)| l.chars().enumerate()
-            .map(move |(x, c)| (x, y, c == '#'))
+            .map(move |(x, c)| (x as isize, y as isize, c == '#'))
         )
         .flatten()
         .filter(|(_, _, a)| *a)
@@ -82,7 +83,7 @@ pub fn solution(data: &str) -> Result<(usize, usize)> {
     let mut asteroids = parse_map(data);
     let (station_coords, visible_asteroids) = most_direct_sight(&asteroids);
     let vaporized_coords = vaporize_order(&mut asteroids, &station_coords);
-    Ok((visible_asteroids, coord_to_num(&vaporized_coords[199])))
+    Ok((visible_asteroids, coord_to_num(&vaporized_coords[199])?))
 }
 
 #[cfg(test)]
@@ -94,10 +95,14 @@ mod test {
 
     #[test]
     fn coord_num() {
-        assert_eq!(coord_to_num(&(0, 0)), 0);
-        assert_eq!(coord_to_num(&(0, 1)), 1);
-        assert_eq!(coord_to_num(&(8, 2)), 802);
-        assert_eq!(coord_to_num(&(8, 0)), 800);
+        assert_eq!(coord_to_num(&(0, 0)).unwrap(), 0);
+        assert_eq!(coord_to_num(&(0, 1)).unwrap(), 1);
+        assert_eq!(coord_to_num(&(8, 2)).unwrap(), 802);
+        assert_eq!(coord_to_num(&(8, 0)).unwrap(), 800);
+
+        assert!(coord_to_num(&(-1, 0)).is_err());
+        assert!(coord_to_num(&(0, -1)).is_err());
+        assert!(coord_to_num(&(-1, -1)).is_err());
     }
 
     #[test]
