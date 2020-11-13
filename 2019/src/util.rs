@@ -36,3 +36,28 @@ impl Dir {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn direction() {
+        let mut c = (-2, 3);
+        let mut d = Dir::Up;
+
+        for _ in 0..4 {
+            c = d.apply(&c);
+            d = d.turn(true);
+        }
+        assert_eq!(c, (-2, 3));
+        assert_eq!(d, Dir::Up);
+        
+        for _ in 0..4 {
+            c = d.apply(&c);
+            d = d.turn(false);
+        }
+        assert_eq!(c, (-2, 3));
+        assert_eq!(d, Dir::Up);
+    }
+}
