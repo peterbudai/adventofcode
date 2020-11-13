@@ -20,8 +20,8 @@ impl Robot {
 
     fn run(&mut self, hull: &mut HashMap<Coord, bool>) -> Result<()> {
         loop {
-            let color = *hull.get(&self.pos).unwrap_or(&false);
-            self.computer.push_input(if color { 1 } else { 0 });
+            let ocolor = *hull.get(&self.pos).unwrap_or(&false);
+            self.computer.push_input(if ocolor { 1 } else { 0 });
 
             if !self.computer.run_until_output()? {
                 return Ok(())
@@ -31,38 +31,19 @@ impl Robot {
                 1 => true,
                 _ => return Err(anyhow!("Invalid color")),
             };
+            hull.insert(self.pos, ncolor);
 
             if !self.computer.run_until_output()? {
                 return Err(anyhow!("Missing output"));
             }
-            let turn = self.computer.pop_output()?;
-            let (x, y) = self.pos;
-            let (ndir, nx, ny) = match self.dir {
-                Direction::Up => match turn {
-                    0 => (Direction::Left, x-1, y),
-                    1 => (Direction::Right, x+1, y),
-                    _ => return Err(anyhow!("Invalid direction")),
-                },
-                Direction::Left => match turn {
-                    0 => (Direction::Down, x, y-1),
-                    1 => (Direction::Up, x, y+1),
-                    _ => return Err(anyhow!("Invalid direction")),
-                },
-                Direction::Down => match turn {
-                    0 => (Direction::Right, x+1, y),
-                    1 => (Direction::Left, x-1, y),
-                    _ => return Err(anyhow!("Invalid direction")),
-                },
-                Direction::Right => match turn {
-                    0 => (Direction::Up, x, y+1),
-                    1 => (Direction::Down, x, y-1),
-                    _ => return Err(anyhow!("Invalid direction")),
-                },
+            let turn = match self.computer.pop_output()? {
+                0 => true,
+                1 => false,
+                _ => return Err(anyhow!("Invalid direction")),
             };
+            self.dir = self.dir.turn(turn);
 
-            hull.insert(self.pos, ncolor);
-            self.pos = (nx, ny);
-            self.dir = ndir;
+            self.pos = self.dir.apply(&self.pos);
         }
     }
 }

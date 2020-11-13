@@ -34,15 +34,10 @@ fn walk_path(path: &Path) -> Vec<Coord> {
     let mut trace = Vec::<Coord>::new();
     trace.push((0, 0));
 
-    for dir in path {
-        let (d, dx, dy) = match dir {
-            (Direction::Up, d) => (d, 0isize, 1isize),
-            (Direction::Down, d) => (d, 0isize, -1isize),
-            (Direction::Left, d) => (d, -1isize, 0isize),
-            (Direction::Right, d) => (d, 1isize, 0isize),
-        };
+    for (dir, dist) in path {
+        let (dx, dy) = dir.delta();
         let (lastx, lasty) = *trace.last().unwrap();
-        for i in 1..(*d as isize)+1 {
+        for i in 1..(*dist as isize)+1 {
             trace.push((lastx + dx * i, lasty + dy * i))
         }
     }
