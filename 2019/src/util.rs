@@ -52,7 +52,7 @@ mod test {
         }
         assert_eq!(c, (-2, 3));
         assert_eq!(d, Dir::Up);
-        
+
         for _ in 0..4 {
             c = d.apply(&c);
             d = d.turn(false);
