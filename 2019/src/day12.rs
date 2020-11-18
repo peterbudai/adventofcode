@@ -1,6 +1,7 @@
 use anyhow::{anyhow, Result};
 use itertools::Itertools;
 use regex::Regex;
+use num::Integer;
 
 type Coord3 = (isize, isize, isize);
 
@@ -31,6 +32,15 @@ fn parse_input(data: &str) -> Result<(Vec<Coord3>, Vec<Coord3>)> {
     Ok((p, v))
 }
 
+fn energy(positions: &[Coord3], velocities: &[Coord3]) -> usize {
+    positions.iter().map(|p| sumabs(p))
+        .zip(
+            velocities.iter().map(|v| sumabs(v))
+        )
+        .map(|(pot, kin)| (pot * kin) as usize)
+        .sum()
+}
+
 fn step(positions: &mut [Coord3], velocities: &mut [Coord3]) {
     for (i, p0) in positions.iter().enumerate() {
         for p1 in positions.iter() {
@@ -43,23 +53,62 @@ fn step(positions: &mut [Coord3], velocities: &mut [Coord3]) {
     }
 }
 
-fn energy(positions: &[Coord3], velocities: &[Coord3]) -> usize {
-    positions.iter().map(|p| sumabs(p))
-        .zip(
-            velocities.iter().map(|v| sumabs(v))
-        )
-        .map(|(pot, kin)| (pot * kin) as usize)
-        .sum()
+fn separate_axis(positions: &[Coord3], velocities: &[Coord3], axis: u8) -> (Vec<isize>, Vec<isize>) 
+{
+    let axisfn: fn(&Coord3)->isize = match axis {
+        0 => |(x, _, _)| *x,
+        1 => |(_, y, _)| *y,
+        2 => |(_, _, z)| *z,
+        _ => unreachable!()
+    };
+    (positions.iter().map(|p| axisfn(p)).collect_vec(), velocities.iter().map(|p| axisfn(p)).collect_vec())
+}
+
+fn step_axis(positions: &mut [isize], velocities: &mut [isize]) {
+    for (i, v) in velocities.iter_mut().enumerate() {
+        let p0 = positions[i];
+        *v += positions.iter().map(|p| (p - p0).signum()).sum::<isize>();
+    }
+    for (i, p) in positions.iter_mut().enumerate() {
+        *p += velocities[i];
+    }
+}
+
+fn find_repeat_in_axis(positions: &[isize], velocities: &[isize]) -> usize {
+    let mut v = velocities.to_owned();
+    let mut p = positions.to_owned();
+
+    let mut steps = 0;
+    loop {
+        step_axis(&mut p, &mut v);
+        steps += 1;
+
+        if &v[..] == velocities {
+            break;
+        }
+    }
+    steps * 2
+}
+
+fn find_repeat(positions: &[Coord3], velocities: &[Coord3]) -> usize {
+    (0..3).into_iter().map(|axis| {
+        let (p, v) = separate_axis(&positions, &velocities, axis);
+        find_repeat_in_axis(&p, &v)
+    }).fold1(|a, s| a.lcm(&s)).unwrap()
 }
 
 pub fn solution(data: &str) -> Result<(usize, usize)> {
     let (mut positions, mut velocities) = parse_input(data)?;
 
-    for _ in 0..1000 {
-        step(&mut positions, &mut velocities);
-    }
+    let repeat = find_repeat(&positions, &velocities);
+    let energy = {
+        for _ in 0..1000 {
+            step(&mut positions, &mut velocities);
+        }
+        energy(&positions, &velocities)
+    };
 
-    Ok((energy(&positions, &velocities),0))
+    Ok((energy, repeat))
 }
 
 #[cfg(test)]
@@ -77,6 +126,24 @@ mod test {
         ).unzip()
     }
 
+    fn input1() -> (Vec<Coord3>, Vec<Coord3>) {
+        parse_input(indoc!(
+            "<x=-1, y=0, z=2>
+            <x=2, y=-10, z=-7>
+            <x=4, y=-8, z=8>
+            <x=3, y=5, z=-1>"
+        )).unwrap()
+    }
+
+    fn input2() -> (Vec<Coord3>, Vec<Coord3>) {
+        parse_input(indoc!(
+            "<x=-8, y=-10, z=0>
+             <x=5, y=5, z=10>
+             <x=2, y=-7, z=3>
+             <x=9, y=-8, z=-3>"
+        )).unwrap()
+    }
+
     #[test]
     fn parse() {
         assert_eq!(parse_coord("<x=-1, y=0, z=2>").unwrap(), (-1, 0, 2));
@@ -87,12 +154,7 @@ mod test {
 
     #[test]
     fn steps1() {
-        let (mut p, mut v) = parse_input(indoc!(
-            "<x=-1, y=0, z=2>
-            <x=2, y=-10, z=-7>
-            <x=4, y=-8, z=8>
-            <x=3, y=5, z=-1>"
-        )).unwrap();
+        let (mut p, mut v) = input1();
 
         let (pt, vt) = parse_test_vector(indoc!(
             "pos=<x=-1, y=  0, z= 2>, vel=<x= 0, y= 0, z= 0>
@@ -216,12 +278,7 @@ mod test {
 
     #[test]
     fn steps2() {
-        let (mut p, mut v) = parse_input(indoc!(
-            "<x=-8, y=-10, z=0>
-             <x=5, y=5, z=10>
-             <x=2, y=-7, z=3>
-             <x=9, y=-8, z=-3>"
-        )).unwrap();
+        let (mut p, mut v) = input2();
 
         let (pt, vt) = parse_test_vector(indoc!(
             "pos=<x= -8, y=-10, z=  0>, vel=<x=  0, y=  0, z=  0>
@@ -365,12 +422,7 @@ mod test {
 
     #[test]
     fn energy1() {
-        let (mut p, mut v) = parse_input(indoc!(
-            "<x=-1, y=0, z=2>
-             <x=2,y=-10,z=-7>
-             <x=4,y=-8, z=8>
-             <x=3, y=5,z=-1>"
-        )).unwrap();
+        let (mut p, mut v) = input1();
 
         for _ in 0..10 {
             step(&mut p, &mut v);
@@ -381,17 +433,63 @@ mod test {
 
     #[test]
     fn energy2() {
-        let (mut p, mut v) = parse_input(indoc!(
-            "<x=-8, y=-10, z=0>
-             <x=5, y=5, z=10>
-             <x=2, y=-7, z=3>
-             <x=9, y=-8, z=-3>"
-        )).unwrap();
+        let (mut p, mut v) = input2();
 
         for _ in 0..100 {
             step(&mut p, &mut v);
         }
 
         assert_eq!(energy(&p, &v), 1940);
-    }        
+    }
+
+    #[test]
+    fn per_axis() {
+        let (mut p, mut v) = input1();
+
+        let (mut px, mut vx) = separate_axis(&p, &v, 0);
+        let (mut py, mut vy) = separate_axis(&p, &v, 1);
+        let (mut pz, mut vz) = separate_axis(&p, &v, 2);
+
+        step_axis(&mut px, &mut vx);
+        step_axis(&mut py, &mut vy);
+        step_axis(&mut pz, &mut vz);
+        step(&mut p, &mut v);
+
+        assert_eq!(separate_axis(&p, &v, 0), (px, vx));
+        assert_eq!(separate_axis(&p, &v, 1), (py, vy));
+        assert_eq!(separate_axis(&p, &v, 2), (pz, vz));
+    }
+
+    #[test]
+    fn repeat_per_axis() {
+
+        let test_axis = |(p, v): (Vec<Coord3>, Vec<Coord3>), axis| {
+            let (pa, va) = separate_axis(&p, &v, axis);
+            let sa = find_repeat_in_axis(&pa, &va);
+    
+            let mut pt = p.clone();
+            let mut vt = v.clone();
+            for _ in 0..sa {
+                step(&mut pt, &mut vt);
+            }
+            assert_eq!(separate_axis(&pt, &vt, axis), (pa, va));
+        };
+
+        test_axis(input1(), 0);
+        test_axis(input1(), 1);
+        test_axis(input1(), 2);
+
+        test_axis(input2(), 0);
+        test_axis(input2(), 1);
+        test_axis(input2(), 2);
+    }
+
+    #[test]
+    fn repeat() {
+        let (p, v) = input1();
+        assert_eq!(find_repeat(&p, &v), 2772);
+
+        let (p, v) = input2();
+        assert_eq!(find_repeat(&p, &v), 4686774924);
+    }
 }
