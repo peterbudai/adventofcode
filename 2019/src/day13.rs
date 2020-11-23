@@ -99,7 +99,7 @@ impl Game {
             }
 
             if let Some(paddle_x) = self.paddle {
-                if let Some((ball_x, ball_y)) = self.ball {
+                if let Some((ball_x, _)) = self.ball {
                     let movement = (ball_x - paddle_x).signum();
                     self.computer.push_input(movement);
                     if movement != 0 {
