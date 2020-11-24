@@ -2,10 +2,10 @@ pub type Coord = (isize, isize);
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Dir {
-    Up,
-    Down,
-    Left,
-    Right,
+    Up = 1,
+    Down = 2,
+    Left = 3,
+    Right = 4,
 }
 
 impl Dir {
@@ -23,6 +23,12 @@ impl Dir {
         (coord.0 + delta.0, coord.1 + delta.1)
     }
 
+    pub fn apply_mut(&self, coord: &mut Coord) {
+        let delta = self.delta();
+        coord.0 += delta.0;
+        coord.1 += delta.1;
+    }
+
     pub fn turn(&self, clockwise: bool) -> Self {
         match self {
             Dir::Up if clockwise => Dir::Left,
@@ -34,6 +40,19 @@ impl Dir {
             Dir::Right if clockwise => Dir::Up,
             Dir::Right => Dir::Down,
         }
+    }
+
+    pub fn opposite(&self) -> Self {
+        match self {
+            Dir::Up => Dir::Down,
+            Dir::Down => Dir::Up,
+            Dir::Left => Dir::Right,
+            Dir::Right => Dir::Left,
+        }
+    }
+
+    pub fn iter() -> impl Iterator<Item = Dir> {
+        [Dir::Up, Dir::Down, Dir::Left, Dir::Right].iter().copied()
     }
 }
 
