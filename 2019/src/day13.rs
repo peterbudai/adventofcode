@@ -25,9 +25,9 @@ impl Game {
     }
 
     fn with_coin(code: &[isize]) -> Self {
-        let mut hacked = code.to_owned();
-        hacked[0] = 2;
-        Self::without_coin(&hacked)
+        let mut game = Game::without_coin(code);
+        game.computer.set_control_word(2);
+        game
     }
 
     fn draw(&self) {

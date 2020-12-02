@@ -37,8 +37,8 @@ impl Robot {
                 return Err(anyhow!("Missing output"));
             }
             let turn = match self.computer.pop_output()? {
-                0 => true,
-                1 => false,
+                0 => false,
+                1 => true,
                 _ => return Err(anyhow!("Invalid direction")),
             };
             self.dir = self.dir.turn(turn);
@@ -58,7 +58,7 @@ fn draw(hull: &HashMap<Coord, bool>) -> String {
 
     (0..height).map(|y| 
         (0..width).map(|x|
-            if *hull.get(&(minx+x, maxy-y)).unwrap_or(&false) { "##" } else { "  " }
+            if *hull.get(&(minx+x, miny+y)).unwrap_or(&false) { "##" } else { "  " }
         ).fold(String::new(), |s, p| s + p)
     ).fold(String::new(), |s, l| s + "\n" + &l)
 }

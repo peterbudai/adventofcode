@@ -40,6 +40,10 @@ impl Computer {
         self.memory[2] = verb;
     }    
     
+    pub fn set_control_word(&mut self, data: isize) {
+        self.memory[0] = data;
+    }
+
     pub fn get_result(&self) -> isize {
         self.memory[0]
     }
