@@ -2,8 +2,17 @@ mod util;
 mod intcode;
 
 macro_rules! solution {
-    {$($day: ident),*} => {
-        $(
+    ($day:ident => main) => {
+        mod $day;
+
+        fn main() -> anyhow::Result<()> {
+            let (a, b) = $day::solution(&std::fs::read_to_string(format!("data/{}.txt", stringify!($day)))?)?;
+            println!("{}: {:} {:}", stringify!($day), a, b);
+            Ok(())
+        }
+    };
+
+    ($day:ident) => {
         mod $day;
 
         #[allow(dead_code)]
@@ -12,7 +21,10 @@ macro_rules! solution {
             println!("{}: {:} {:}", stringify!($day), a, b);
             Ok(())
         }
-        )*
+    };
+
+    {$($day:ident $(=> $main:ident)?),+ $(,)?} => {
+        $( solution!($day $(=> $main)?); )+
     };
 }
 
@@ -33,9 +45,5 @@ solution! {
     day14,
     day15,
     day16,
-    day17
-}
-
-fn main() -> anyhow::Result<()> {
-    day17()
+    day17 => main,
 }
