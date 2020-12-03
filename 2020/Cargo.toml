@@ -5,10 +5,10 @@ authors = ["Péter Budai <buc@peterbudai.eu>"]
 edition = "2018"
 
 [lib]
-name = "libaoc"
+name = "aoc"
 
 [[bin]]
-name = "aoc"
+name = "aoc2020"
 path = "src/bin.rs"
 
 [dependencies]

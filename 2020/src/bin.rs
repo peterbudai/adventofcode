@@ -1,3 +1,3 @@
 pub fn main() -> anyhow::Result<()> {
-    libaoc::MAIN()
+    aoc::MAIN()
 }
