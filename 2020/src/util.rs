@@ -4,11 +4,11 @@ use std::str::FromStr;
 use anyhow::Result;
 
 /// Parse line-separated input into a vector. Can convert into anything that
-/// implements the `FromStr` trait.
+/// implements the [`FromStr`](std::str::FromStr) trait.
 /// 
 /// # Arguments
 /// 
-/// `input`: Puzzle input string
+/// * `input`: Puzzle input string
 /// 
 /// # Errors
 /// 
