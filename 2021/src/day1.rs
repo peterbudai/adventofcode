@@ -11,22 +11,10 @@ fn count_increase(data: impl Iterator<Item = usize>) -> usize {
     .1
 }
 
-/// Solution for part 1: product of two entries.
-/// 
-/// # Arguments
-/// 
-/// * `input`: Puzzle input string.
-///
 pub fn part1(input: &str) -> Result<usize> {
     Ok(count_increase(parse_lines::<usize>(input)?.into_iter()))
 }
 
-/// Solution for part 2: product of three entries.
-/// 
-/// # Arguments
-/// 
-/// * `input`: Puzzle input string.
-///
 pub fn part2(input: &str) -> Result<usize> {
     let data = parse_lines::<usize>(input)?;
     count_increase(

@@ -78,5 +78,6 @@ macro_rules! solution {
 
 solution! { 
     day1,
-    day2 => main,
+    day2,
+    day3 => main,
 }

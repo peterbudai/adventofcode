@@ -28,12 +28,6 @@ impl FromStr for Command {
     }
 }
 
-/// Solution for part 1: product of two entries.
-/// 
-/// # Arguments
-/// 
-/// * `input`: Puzzle input string.
-///
 pub fn part1(input: &str) -> Result<usize> {
     let (depth, horiz) = parse_lines::<Command>(input)?
     .into_iter()
@@ -48,12 +42,6 @@ pub fn part1(input: &str) -> Result<usize> {
     Ok(depth * horiz)
 }
 
-/// Solution for part 2: product of three entries.
-/// 
-/// # Arguments
-/// 
-/// * `input`: Puzzle input string.
-///
 pub fn part2(input: &str) -> Result<usize> {
     let (_, depth, horiz) = parse_lines::<Command>(input)?
     .into_iter()
@@ -83,8 +71,13 @@ mod test {
      );
 
     #[test]
-    fn count() -> Result<()> {
+    fn solution1() -> Result<()> {
         assert_eq!(part1(INPUT)?, 150);
+        Ok(())
+    }
+
+    #[test]
+    fn solution2() -> Result<()> {
         assert_eq!(part2(INPUT)?, 900);
         Ok(())
     }
